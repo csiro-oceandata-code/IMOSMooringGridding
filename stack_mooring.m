@@ -248,7 +248,7 @@ tdepth_m = tdepth_m(is);
 %salinity matrices
 [val,is]=sort(pdeps);
 deps = deps(:,is);
-s = s(:,is);
+sal = sal(:,is);
 names = names(is);
 
 % and for u matrices
