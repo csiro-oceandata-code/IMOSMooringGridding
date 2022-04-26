@@ -1,10 +1,10 @@
 % import the IMOS netcdf files and take a look:
 clear
 
-moorn = 'EAC3200';
-homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1909_2105/data_processing/';
-inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1909_2105/data_processing/IMOSnetcdf/' moorn '/'];
-outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1909_2105/data_processing/matdata_qcd_toolbox/';
+moorn = 'EAC4800';
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/';
+inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/IMOSnetcdf/' moorn '/'];
+outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/matdata_qcd_toolbox/';
 
 % homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/data_processing/';
 % m = dir(homedir);
@@ -38,17 +38,17 @@ for a = 1:length(fn)
 %         s.type = 'SBE37';
 %     end
     
-    %BIN AVERAGE HERE for single-ping ADCP data
-    if contains('RDI',s.name)
-        if s.time(5) - s.time(4) < 0.01
-            %ensure that the bdepth flags inherit the u_qc
-            s.bdepth_qc = s.u_qc;
-            s = imosRDIbinAveragingCSIRO(s);
-            %remove bdepths without data in u
-            inan = isnan(s.u);
-            s.bdepth_qc(inan) = 4;
-        end
-    end
+%     %BIN AVERAGE HERE for single-ping ADCP data
+%     if contains('RDI',s.name)
+%         if s.time(5) - s.time(4) < 0.01
+%             %ensure that the bdepth flags inherit the u_qc
+%             s.bdepth_qc = s.u_qc;
+%             s = imosRDIbinAveragingCSIRO(s);
+%             %remove bdepths without data in u
+%             inan = isnan(s.u);
+%             s.bdepth_qc(inan) = 4;
+%         end
+%     end
     
 %         s.serial = [s.serial '_' ext{b}];
     %edit time_in and time_out fields:
