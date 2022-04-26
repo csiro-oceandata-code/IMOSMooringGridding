@@ -5,8 +5,8 @@ dist =  600;
 moorn = 'EAC4700';
 dirn = moorn;
 homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/';
-inputdir=[homedir 'data_processing/matdata_qcd/'];
-inputdir2=[homedir 'data_processing/matdata_qcd/'];
+inputdir=[homedir 'data_processing/matdata_qcd_toolbox/'];
+inputdir2=[homedir 'data_processing/matdata_qcd_toolbox/'];
 doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'data_processing/plots/'];
 %% Go through each instrument, starting with the ADCP to get the time base

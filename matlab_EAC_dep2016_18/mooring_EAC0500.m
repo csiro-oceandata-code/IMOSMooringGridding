@@ -5,8 +5,8 @@ dist =  600;
 moorn = 'EAC0500';
 dirn = moorn;
 homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/';
-inputdir=[homedir 'data_processing/matdata_qcd/'];
-inputdir2=[homedir 'data_processing/matdata_qcd/'];
+inputdir=[homedir 'data_processing/matdata_qcd_toolbox/'];
+inputdir2=[homedir 'data_processing/matdata_qcd_toolbox/'];
 doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'data_processing/plots/'];
 %% Go through each instrument, starting with the ADCP to get the time base
@@ -19,7 +19,8 @@ t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
 names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
 pdept=[];pdepu=[];pdepd=[];pdeps=[];
 
-% % Use 9167 to get start and end times.
+% % Use 9167 to get start and end times. one ADCP failed, other had short
+% record
 load([inputdir '9167'])
 s = clean_data(s);
 % Create hourly time base with the correct start and end times

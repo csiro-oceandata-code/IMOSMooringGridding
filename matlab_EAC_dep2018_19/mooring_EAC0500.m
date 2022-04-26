@@ -4,8 +4,8 @@ clear
 dist =  600;
 moorn = 'EAC0500';
 dirn = moorn;
-inputdir=['/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/data_processing/matdata_qcd/'];
-inputdir2=['/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/data_processing/matdata_qcd/'];
+inputdir=['/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/data_processing/matdata_qcd_toolbox/'];
+inputdir2=['/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/data_processing/matdata_qcd_toolbox/'];
 doutputdir=['/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/stacked/'];
 poutputdir = '/work/observations/oceanobs_data/EACdata/mooring/EAC1805_1909/data_processing/plots/';
 %% Go through each instrument, starting with the ADCP to get the time base
@@ -25,7 +25,7 @@ tbase = s.time;
 temp = s.temperature;
 dep = s.depth;
 %trim time ends:
-inwater = tbase>s.time_in & tbase < s.time_out;
+inwater = tbase>s.starttime & tbase < s.endtime;
 tbase = tbase(inwater);
 temp = temp(inwater);
 dep = dep(inwater);
