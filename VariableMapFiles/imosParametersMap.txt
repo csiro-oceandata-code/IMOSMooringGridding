@@ -1,0 +1,41 @@
+ABSIC1,              qc(1).ea,0, backscatter_intensity_from_acoustic_beam_1,                                                 Decibels,                          A, 999999.0, 0.0,     150.0,    float
+CMAG1,         qc(1).cr,0, particle_distribution_correlation_magnitude_from_acoustic_beam_1,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+PERG1,         qc(1).pg,0, percentage_of_good_three_beam_solutions,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+ABSIC2,              qc(2).ea,0, backscatter_intensity_from_acoustic_beam_2,                                                 Decibels,                          A, 999999.0, 0.0,     150.0,    float
+CMAG2,         qc(2).cr,0, particle_distribution_correlation_magnitude_from_acoustic_beam_2,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+PERG2,         qc(2).pg,0, percentage_of_transformations_rejected,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+ABSIC3,              qc(3).ea,0, backscatter_intensity_from_acoustic_beam_3,                                                 Decibels,                          A, 999999.0, 0.0,     150.0,    float
+CMAG3,         qc(3).cr,0, particle_distribution_correlation_magnitude_from_acoustic_beam_3,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+PERG3,         qc(3).pg,0, percentage_of_measurements_with_more_than_one_beam_bad,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+ABSIC4,              qc(4).ea,0, backscatter_intensity_from_acoustic_beam_4,                                                 Decibels,                          A, 999999.0, 0.0,     150.0,    float
+CMAG4,         qc(4).cr,0, particle_distribution_correlation_magnitude_from_acoustic_beam_3,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+PERG4,         qc(4).pg,0, percentage_of_good_four_beam_solutions,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+CNDC,cond,,,,,,,,
+DEPTH,               depth,1, depth,                                                                          m,                                 Z, 999999.0, -5.0,    12000.0,  float
+DEPTH,               depth_inferred,1, depth,                                                                          m,                                 Z, 999999.0, -5.0,    12000.0,  float
+ECUR,                erv,0, error_sea_water_velocity,                                                       m s-1,                             V, 999999.0, -5.0,    5.0,      float
+HEADING,             head,0, platform_yaw_angle,                                                                        Degrees,                           E, 999999.0, 0.0,     360.0,    float
+HEADING_MAG,         head_mag,0, platform_yaw_angle,                                                                        Degrees,                           E, 999999.0, 0.0,     360.0,    float
+HEIGHT_ABOVE_SENSOR, brange,0, height_above_sensor,                                                            m,                                 Z, 999999.0, -12000.0,     12000.0,  float
+LATITUDE,            latitude,1, latitude,                                                                       degrees north,                     ,  999999.0, -90.0,   90.0,     double
+LONGITUDE,           longitude,1, longitude,                                                                      degrees east,                      ,  999999.0, -180.0,  180.0,    double
+PITCH,               pitch,1, platform_pitch_angle,                                                           Degrees,                           E, 999999.0, -180.0,  180.0,    float
+PRES_REL,            pressure,1, sea_water_pressure_due_to_sea_water,                                                             dbar,                              Z, 999999.0, -5.0,    12000.0,  float
+PSAL,                salinity,1, sea_water_salinity,                                                             psu,                               S, 999999.0, 2.0,     41.0,     float
+ROLL,                roll,1, platform_roll_angle,                                                            Degrees,                           E, 999999.0, -180.0,  180.0,    float
+TEMP,                temperature,1, sea_water_temperature,                                                          Celsius,                           T, 999999.0, -2.5,    40.0,     float
+TIME,                time,1, time,                                                                           day,                               ,  999999.0, 0.0,     90000.0,  double
+UCUR,                u,1, eastward_sea_water_velocity,                                                    m s-1,                             V, 999999.0, -10.0,   10.0,     float
+VCUR,                v,1, northward_sea_water_velocity,                                                   m s-1,                             V, 999999.0, -10.0,   10.0,     float
+WCUR,                w,1, upward_sea_water_velocity,                                                      m s-1,                             V, 999999.0, -5.0,    5.0,      float
+UCUR_MAG,                u_mag,1, magnetic_eastward_sea_water_velocity,                                                    m s-1,                             V, 999999.0, -10.0,   10.0,     float
+VCUR_MAG,                v_mag,1, magnetic_northward_sea_water_velocity,                                                   m s-1,                             V, 999999.0, -10.0,   10.0,     float
+instrument_serial_number,serial,,,,,,,,
+instrument_nominal_depth,planned_depth,,,,,,,,
+instrument_sample_interval,time_int,,,,,,,,
+site_depth_at_deployment,bot_depth,,,,,,,,
+site_code,mooring,,,,,,,,
+instrument,name,,,,,,,,
+time_deployment_start,time_in,,,,,,,,
+time_deployment_end,time_out,,,,,,,,
+

@@ -1,0 +1,42 @@
+variables{j}.name ='ABSIC1',              ea_1,0, backscatter_intensity_from_acoustic_beam_1,                                                 count,                          A, 999999.0, 0.0,     150.0,    float
+variables{j}.name ='CMAG1',         cr_1,0, particle_distribution_correlation_magnitude_from_acoustic_beam_1,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+variables{j}.name ='PERG1',         pg_1,0, percentage_of_good_three_beam_solutions,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+variables{j}.name ='ABSIC2',              ea_2,0, backscatter_intensity_from_acoustic_beam_2,                                                 count,                          A, 999999.0, 0.0,     150.0,    float
+variables{j}.name ='CMAG2',         cr_2,0, particle_distribution_correlation_magnitude_from_acoustic_beam_2,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+variables{j}.name ='PERG2',         pg_2,0, percentage_of_transformations_rejected,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+variables{j}.name ='ABSIC3',              ea_3,0, backscatter_intensity_from_acoustic_beam_3,                                                 count,                          A, 999999.0, 0.0,     150.0,    float
+variables{j}.name ='CMAG3',         cr_3,0, particle_distribution_correlation_magnitude_from_acoustic_beam_3,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+variables{j}.name ='PERG3',         pg_3,0, percentage_of_measurements_with_more_than_one_beam_bad,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+variables{j}.name ='ABSIC4',              ea_4,0, backscatter_intensity_from_acoustic_beam_4,                                                 count,                          A, 999999.0, 0.0,     150.0,    float
+variables{j}.name ='CMAG4',         cr_4,0, particle_distribution_correlation_magnitude_from_acoustic_beam_3,                                                     ,                                  E, 999999.0, 0.0,     250.0,    float
+variables{j}.name ='PERG4',         pg_4,0, percentage_of_good_four_beam_solutions,                                                           percent,                           E, 999999.0, 0.0,     100.0,    float
+variables{j}.name ='CNDC',cond,,,,,,,,
+variables{j}.name ='DEPTH',               depth,1, depth,                                                                          m,                                 Z, 999999.0, -5.0,    12000.0,  float
+variables{j}.name ='DEPTH',               depth_inferred,1, depth,                                                                          m,                                 Z, 999999.0, -5.0,    12000.0,  float
+variables{j}.name ='ECUR',                erv,0, error_sea_water_velocity,                                                       m s-1,                             V, 999999.0, -5.0,    5.0,      float
+variables{j}.name ='HEADING',             head,0, heading,                                                                        Degrees,                           E, 999999.0, 0.0,     360.0,    float
+variables{j}.name ='HEADING_MAG',             head_mag,0, platform_yaw_angle,                                                                        Degrees,                           E, 999999.0, 0.0,     360.0,    float
+dimensions{k}.name ='HEIGHT_ABOVE_SENSOR', brange,2, height_above_sensor,                                                            m,                                 Z, 999999.0, -12000.0,     12000.0,  float
+variables{j}.name ='LATITUDE',            latitude,4, latitude,                                                                       degrees north,                     ,  999999.0, -90.0,   90.0,     double
+variables{j}.name ='LONGITUDE',           longitude,5, longitude,                                                                      degrees east,                      ,  999999.0, -180.0,  180.0,    double
+variables{j}.name ='PITCH',               pitch,1, platform_pitch_angle,                                                           Degrees,                           E, 999999.0, -180.0,  180.0,    float
+variables{j}.name ='PRES_REL',                pressure,1, sea_water_pressure_due_to_sea_water,                                                             dbar,                              Z, 999999.0, -5.0,    12000.0,  float
+variables{j}.name ='PSAL',                salinity,1, sea_water_salinity,                                                             psu,                               S, 999999.0, 2.0,     41.0,     float
+variables{j}.name ='ROLL',                roll,1, platform_roll_angle,                                                            Degrees,                           E, 999999.0, -180.0,  180.0,    float
+variables{j}.name ='TEMP',                temperature,1, sea_water_temperature,                                                          Celsius,                           T, 999999.0, -2.5,    40.0,     float
+dimensions{k}.name ='TIME',               time,1, time,                                                                           day,                               ,  999999.0, 0.0,     90000.0,  double
+variables{j}.name ='UCUR',                u,1, eastward_sea_water_velocity,                                                    m s-1,                             V, 999999.0, -10.0,   10.0,     float
+variables{j}.name ='VCUR',                v,1, northward_sea_water_velocity,                                                   m s-1,                             V, 999999.0, -10.0,   10.0,     float
+variables{j}.name ='WCUR',                w,1, upward_sea_water_velocity,                                                      m s-1,                             V, 999999.0, -5.0,    5.0,      float
+variables{j}.name ='UCUR_MAG',                u_mag,1, magnetic_eastward_sea_water_velocity,                                                    m s-1,                             V, 999999.0, -10.0,   10.0,     float
+variables{j}.name ='VCUR_MAG',                v_mag,1, magnetic_northward_sea_water_velocity,                                                   m s-1,                             V, 999999.0, -10.0,   10.0,     float
+meta.instrument_make,name,,,,,,,,
+meta.instrument_model,type,,,,,,,,
+meta.instrument_serial_number,serial,,,,,,,,
+meta.instrument_sample_interval,time_int,,,,,,,,
+meta.site_depth_at_deployment,bot_depth,,,,,,,,
+meta.title,mooring,,,,,,,,
+meta.instrument_nominal_depth,planned_depth,,,,,,,,
+
+
+
