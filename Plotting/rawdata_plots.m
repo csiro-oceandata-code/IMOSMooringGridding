@@ -6,8 +6,9 @@
  clear range
  clf
 subplot(2,1,1)
-% **** Put this back in when velocity data is included
 pcolor(tbase,depu',real(u)');caxis([-1 1]);shading flat;colorbar
+hold on
+% plot(tbase,depu,'k')
 datetick('keeplimits');axis ij
 ylabel('Bin')
 xlabel('Time')
@@ -15,6 +16,8 @@ title(['Zonal velocity after stacking - ' moorn])
 caxis([-0.5 0.5])
 subplot(2,1,2)
 pcolor(tbase,depu',imag(u)');caxis([-.5,.5]);shading flat;colorbar
+hold on
+% plot(tbase,depu,'k')
 caxis([-1 1])
 datetick('keeplimits');axis ij
 title(['Meridional velocity after stacking - ' moorn])
