@@ -2,7 +2,7 @@
 clear all
 
 %list the deployment names first:
-depn = {'EAC1505_1611','EAC1611_1805','EAC1805_1909'}; %'EAC1204_1308',
+depn = {'EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105'}; 
 
 %list the sites:
 siten = {'EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
