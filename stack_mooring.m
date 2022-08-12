@@ -145,10 +145,15 @@ for a = 1:size(ins.serial,1)
         break
     end
     
-    if isfield(s,'salinity') %no need for an else in this one, not every instrument has salinity
+    if isfield(s,'salinity') 
         if ~isnan(nansum(s.salinity))
             news =match_timebase(tbase,s.time,s.salinity);
             sal= [sal,news];
+            deps = [deps,newp(:)];
+            names(end+1) = nam;
+           pdeps = [pdeps,pdep];
+        else %keep a space if the instrument has no salinity to help with masking later in gridding step
+            sal = [sal,NaN*sal(:,end)];
             deps = [deps,newp(:)];
             names(end+1) = nam;
             pdeps = [pdeps,pdep];
