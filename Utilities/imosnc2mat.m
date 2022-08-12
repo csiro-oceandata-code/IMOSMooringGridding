@@ -3,8 +3,8 @@ function s = imosnc2mat(ncfile,down_up)
 % ncfile = file name
 % down_up = orientation (1 = up, 0 = down)
 % Takes IMOS netcdf format data and converts to s structure:
-% s = 
-% 
+% s =
+%
 %             serial: '14168'
 %               name: 'LR75            '
 %              depth: [11458x1 double]
@@ -115,20 +115,14 @@ for a = 1:length(names)
     
 end
 
-for a = 1:length(gnames)    
+for a = 1:length(gnames)
     % Get value of global attribute.
     gattval = netcdf.getAtt(nc,netcdf.getConstant('NC_GLOBAL'),attname{a});
     eval(['s.' gnames{a} '= gattval;'])
 end
 
-    %put the instrument information in from the file global atts
-    s.type = [];
- %trim the instrument name to get type:
-ins = read_ins_info('instrument_info.csv');
-
-% get the instrument types:
-ii = strmatch(s.serial,ins.serial);
-s.type = ins.type(ii,:);
+%put the instrument information in from the file global atts
+s.type = [];
 
 %fix the time to matlab format:
 s.time = s.time + datenum('1950-01-01 00:00:00');
@@ -195,11 +189,11 @@ for a = 1:length(varname)
     end
     if length(ii) > 1
         %DEPTH and DEPTH_INFERRED MATCH
-%         if s.meas_inf == 1
-            names{a} = 'depth';
-%         else
-%             names{a} = 'depth_inferred';
-%         end 
+        %         if s.meas_inf == 1
+        names{a} = 'depth';
+        %         else
+        %             names{a} = 'depth_inferred';
+        %         end
     end
     %now add the qc fields:
     try
@@ -209,11 +203,11 @@ for a = 1:length(varname)
             ii = strmatch(vn,txt{1},'exact');
             if length(ii) > 1
                 %DEPTH and DEPTH_INFERRED MATCH
-%                 if s.meas_inf == 1
-                    names{a} = 'depth_qc';
-%                 else
-%                     names{a} = 'depth_inferred_qc';
-%                 end
+                %                 if s.meas_inf == 1
+                names{a} = 'depth_qc';
+                %                 else
+                %                     names{a} = 'depth_inferred_qc';
+                %                 end
             elseif ~isempty(ii)
                 names{a} = [char(txt{2}(ii)) '_qc'];
             end

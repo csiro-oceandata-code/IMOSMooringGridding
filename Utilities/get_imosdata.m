@@ -2,9 +2,9 @@
 clear
 
 moorn = 'EAC4800';
-homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/';
-inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/IMOSnetcdf/' moorn '/'];
-outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/matdata_qcd_toolbox/';
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/';
+inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/IMOSnetcdf/' moorn '/'];
+outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/matdata_qcd_toolbox/';
 
 % homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/data_processing/';
 % m = dir(homedir);
@@ -30,13 +30,19 @@ for a = 1:length(fn)
     s = imosnc2mat([inputdir fn(a).name]);
     s.fromToolbox = 1;
 %     s.bot_depth = 63;%for NSI mooring
-%     if ~isempty(findstr('RDI',s.name))
-%         s.type = 'RDI';
-%     elseif ~isempty(findstr('WQM',s.name))
-%         s.type = 'WQM';
-%     else
-%         s.type = 'SBE37';
-%     end
+    if ~isempty(findstr('RDI',s.name))
+        s.type = 'RDI';
+    elseif ~isempty(findstr('WQM',s.name))
+        s.type = 'WQM';
+    elseif ~isempty(findstr('Nortek',s.name))
+        s.type = 'Nortek';
+    elseif ~isempty(findstr('SBE39',s.name))
+        s.type = 'SBE39';
+    elseif ~isempty(findstr('Star',s.name))
+        s.type = 'Starmon';
+    else
+        s.type = 'SBE37';
+    end
     
 %     %BIN AVERAGE HERE for single-ping ADCP data
 %     if contains('RDI',s.name)
