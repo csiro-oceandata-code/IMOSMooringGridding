@@ -12,7 +12,7 @@ clear all
 
   % ALL EAC deployments. SEQ400m mooring is now included in EAC0500 mooring
  isnsi = 0;isseq = 0;
-depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105'};
+depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105','EAC2105_2207'};
 ndep = length(depn);
 
 inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/';
@@ -25,20 +25,22 @@ mor = {'EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
 
 %add an offset for the interpolation step
 depoff = [20,20,20,20,20,20,20];
+nins = 2; %greater than number of salinity instruments to accept interpolation
 
-%FOR THE NSI mooring
+% % FOR THE NSI mooring
 % isnsi = 1;isseq = 0;
 % depn = {'201204' '201209' '201302' '201311' '201405' '201410'	'201503' '201509'	'201602'	'201606' '201610' 	'201702'	'201706'...
-%     '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106'};
+%     '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106', '202109','202203'};
 % ndep = length(depn); 
 % inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
 % outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
 % outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
 % mor = {'NRSNSI'};
+% nins = 1; %greater than number of salinity instruments to accept interpolation
 % 
 % %add an offset for the interpolation step
 % depoff = repmat(5,ndep);
-
+% 
 % %FOR THE SEQ mooring, just the 200m one. 400m mooring is now part of the
 % %EAC500 (see above).
 % %deal with EAC deployments since May 2015 - Sept 2019 (3 deployments)
@@ -91,7 +93,7 @@ warning('on','all')
 orig_state=warning; %turn off warnings
 
 % cycle through each mooring
- for im=1:length(mor)
+ for im=2%1:length(mor)
     moorn = mor{im};
     disp(moorn)
 
@@ -226,7 +228,7 @@ orig_state=warning; %turn off warnings
                 
                 ig = find(~isnan(js));
                 
-                if length(ig) > 2
+                if length(ig) > nins %>2 for dwm, >1 for NSI
                     si(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[js(ig)';js(ig(end))],di')';
                     %then we can do the mask using our filled depth values:
                     igz = ~isnan(js);
