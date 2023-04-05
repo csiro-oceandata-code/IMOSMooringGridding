@@ -17,9 +17,9 @@ for a = 1:size(ins.serial,1)
     bdepth = []; % bin depth variable for ADCPs
     try
         %load the mat file from the conversion of the FV01 IMOS files
-        load([inputdir strtrim(ins.serial(a,:))])
+        load([inputdir strtrim(ins.serial{a})])
     catch
-        disp(['No file for ' ins.serial(a,:)])
+        disp(['No file for ' ins.serial{a}])
         continue
     end
     
@@ -65,7 +65,7 @@ for a = 1:size(ins.serial,1)
                 %time lag calculation only!
                 % won't work for every one as some are really crap
                 sp = s;
-                load([inputdir strtrim(ins.serial(a,:))])
+                load([inputdir strtrim(ins.serial{a})])
                 s = clean_start_end(s);
                 newp =match_timebase(tbase,s.time,s.pressure);
                 s=sp;
@@ -379,6 +379,7 @@ figure(3);clf
 print('-dpng',[outputdir dirn '_pdrift.png'])
 figure(4);clf
 [tt,toff]= check_s_drift(tbase,sal,names,moorn);
+print('-dpng',[outputdir dirn '_sdrift.png'])
 return
 %%
 plot_u_comparison
