@@ -7,7 +7,7 @@ doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'plots/'];
 m = dir([homedir 'data_processing/']);
 moor = {};
-for ifn = 3:length(m)
+for ifn = 4:6%:length(m)
     if m(ifn).isdir
         moor = [moor,m(ifn).name];
     end
@@ -29,15 +29,16 @@ end
 % flds ={'time','pressure','temperature','depth','salinity'};
 % deps = {'d20','d60'};
 % for moor = 1%:3
-%     for depn = 1:2
-%         for b = 1:2
-%             eval(['d = ' deps{depn} ';']);
+%     for depn = 1:2 %depths 1 and 2
+%         eval(['d = ' deps{depn} ';']);
+%         for b = 1:2 %for deployments 1 and 2
 %             load(d{b})
 %             if b == 1
 %                 snew = s;
 %             end
 %             if b == 2
 %                 snew.endtime = s.endtime;
+%                 snew.time_out = s.time_out;
 %                 snew.serial = [snew.serial '_' s.serial];
 %                 for c = 1:length(flds)
 %                     snew.(flds{c}) = [snew.(flds{c}); s.(flds{c})];
@@ -49,7 +50,7 @@ end
 %     end
 % end
 %%
-for fold =20:23%1%:length(moor)
+for fold =1:length(moor)
     clear ins
     dirn = moor{fold};
     moorn = moor{fold};
@@ -132,11 +133,11 @@ end
 return
 %% fix the salinity in 201209 - WQM 173 bad salinity
 clear
-homedir = '/Volumes/DWmoorings1/othermoorings/NSI/';
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
 doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'plots/'];
 load([doutputdir '201209mooring_allbins.mat'])
-sal(1:4694,1)=NaN;
+sal(1:4694,2)=NaN;
 save([doutputdir '201209mooring_allbins.mat'])
 save([doutputdir '201209mooring.mat'])
 %and 201803
@@ -147,7 +148,7 @@ save([doutputdir '201803mooring.mat'])
 
 %% check all the data stacks:
 clear
-homedir = '/Volumes/DWmoorings1/othermoorings/NSI/';
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
 doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'plots/'];
 labl=[];
