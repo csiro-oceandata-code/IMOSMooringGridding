@@ -2,7 +2,8 @@
 clear all
 
 %list the deployment names first:
-depn = {'EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105'}; 
+depn = {'EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909',...
+    'EAC1909_2105','EAC2105_2207'}; 
 
 %list the sites:
 siten = {'EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
@@ -12,12 +13,12 @@ cc = {'b','k','r','g','m','c'};
 
 % now get the plots ready. Need one for each site, each type = 6*3 = 18
 % figures
-for b = 5:9
+for b = 5:7
     figure(b);clf;hold on
 end
 fign = 5;
 
-for a = 6%1:length(siten)
+for a = 2%1:length(siten)
     leg1 = cell(1,length(depn));leg2 = leg1;leg3 = leg1;
     for idep = 1:length(depn)
         % Start in the  stacked directory
