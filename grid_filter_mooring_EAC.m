@@ -10,36 +10,36 @@
 
 clear all
 
-  % ALL EAC deployments. SEQ400m mooring is now included in EAC0500 mooring
- isnsi = 0;isseq = 0;
-depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105','EAC2105_2207'};
-ndep = length(depn);
-
-inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/';
-outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
-outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
-
-%Note that the SEQ400m mooring is now included in the EAC dataset and
-%is labelled as EAC0500.
-mor = {'EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
-
-%add an offset for the interpolation step
-depoff = [20,20,20,20,20,20,20];
-nins = 2; %greater than number of salinity instruments to accept interpolation
-
-% % FOR THE NSI mooring
-% isnsi = 1;isseq = 0;
-% depn = {'201204' '201209' '201302' '201311' '201405' '201410'	'201503' '201509'	'201602'	'201606' '201610' 	'201702'	'201706'...
-%     '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106', '202109','202203'};
-% ndep = length(depn); 
-% inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
+%   % ALL EAC deployments. SEQ400m mooring is now included in EAC0500 mooring
+%  isnsi = 0;isseq = 0;
+% depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105','EAC2105_2207'};
+% ndep = length(depn);
+% 
+% inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/';
 % outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
 % outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
-% mor = {'NRSNSI'};
-% nins = 1; %greater than number of salinity instruments to accept interpolation
+% 
+% %Note that the SEQ400m mooring is now included in the EAC dataset and
+% %is labelled as EAC0500.
+% mor = {'EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
 % 
 % %add an offset for the interpolation step
-% depoff = repmat(5,ndep);
+% depoff = [20,20,20,20,20,20,20];
+% nins = 2; %greater than number of salinity instruments to accept interpolation
+
+% FOR THE NSI mooring
+isnsi = 1;isseq = 0;
+depn = {'201204' '201209' '201302' '201311' '201405' '201410'	'201503' '201509'	'201602'	'201606' '201610' 	'201702'	'201706'...
+    '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106', '202109','202203'};
+ndep = length(depn); 
+inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
+outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
+outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
+mor = {'NRSNSI'};
+nins = 1; %greater than number of salinity instruments to accept interpolation
+
+%add an offset for the interpolation step
+depoff = repmat(5,ndep);
 % 
 % %FOR THE SEQ mooring, just the 200m one. 400m mooring is now part of the
 % %EAC500 (see above).
@@ -93,7 +93,7 @@ warning('on','all')
 orig_state=warning; %turn off warnings
 
 % cycle through each mooring
- for im=2%1:length(mor)
+ for im=1:length(mor)
     moorn = mor{im};
     disp(moorn)
 
@@ -121,16 +121,32 @@ orig_state=warning; %turn off warnings
                 continue
             else
                 load([inputdir '/' depn{idep} '/stacked/' moorn 'mooring.mat' ]);
+                load([inputdir '/EAC_joined/' moorn '_TScoeffs_window.mat'])
             end
         elseif isseq
             load([inputdir '/' depn{idep} '/stacked/' moorn 'mooring.mat' ]);
         else
             load([inputdir '/stacked/' depn{idep} 'mooring.mat' ]);
+            load([outputdir '/EAC0500_TScoeffs_window.mat']) %use the 500m mooring coeffs for NSI salinity
         end
        
+        %construct a synthetic salinity for every temperature:
+        synsal = polyval(b,t,[],mu);
+        % keep the measured salinity values that aren't NAN
+        ikeep = contains(namet,names);
+        salnew = NaN*t; %empty matrix same size as t
+        % fill the matrix with measured values
+        salnew(:,ikeep) = sal;
+        %now replace all the NaNs with the synthetic salinity
+        inan = isnan(salnew);
+        salnew(inan) = synsal(inan);
+        sal = salnew;
+        %now deps == dept
+        deps = dept;
+
         %set up empty matrices
         ui = NaN*ones(length(tbase),length(di))*[1+i];
-        [ti,si ] = deal(NaN*ones(length(tbase),length(di)));
+        [ti,si,maskt,masks,masku] = deal(NaN*ones(length(tbase),length(di)));
         
         
         [nt,nu]=size(u);
@@ -180,10 +196,8 @@ orig_state=warning; %turn off warnings
                     %mask out missing data chunks 
                     igz = ~isnan(ju);
                     %then we can do the mask using our filled depth values:
-                    mask = interp1(jdep,double(igz),di);
-                    ib = mask > 0.2;
-                    ui(j,~ib) = (1+i)*NaN;
-                                        
+                    masku(j,:) = interp1(jdep,double(igz),di);
+
                     [msg,warnID]=lastwarn;
                     warnStruct = warning('off',warnID);
                 end
@@ -206,9 +220,7 @@ orig_state=warning; %turn off warnings
                     ti(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[jt(ig)';jt(ig(end))],di')';
                     %then we can do the mask using our filled depth values:
                     igz = ~isnan(jt);
-                    mask = interp1(jdep,double(igz),di);
-                    ib = mask > 0.5;
-                    ti(j,~ib) = NaN;
+                    maskt(j,:) = interp1(jdep,double(igz),di);
                 end
             end
             
@@ -232,18 +244,35 @@ orig_state=warning; %turn off warnings
                     si(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[js(ig)';js(ig(end))],di')';
                     %then we can do the mask using our filled depth values:
                     igz = ~isnan(js);
-                    mask = interp1(jdep,double(igz),di);
-                    ib = mask > 0.99;
-                    si(j,~ib) = NaN;
+                    masks(j,:) = interp1(jdep,double(igz),di);
                 end
             end
             end
         end  % j loop
-  
-        warning(orig_state);
+        
+        % % check the masking
+        % figure(5);clf;hold on
+        % plot(masks,di,'bo')
 
         
-        %
+        %masking here
+        ib = masku > 0.2;
+        ui(~ib) = (1+i)*NaN;
+        ib = maskt > 0.5;
+        ti(~ib) = NaN;
+        ib = masks > 0.5;
+        si(~ib) = NaN;
+        
+% figure(5)
+% pcolor(tbase,di',ti');shading flat; axis ij
+% figure(6)
+% pcolor(tbase,di',si');shading flat; axis ij
+% figure(7)
+%  pcolor(tbase,deps',sal');shading flat; axis ij
+% figure(8)
+% pcolor(tbase,dept',t');shading flat;axis ij
+        warning(orig_state);
+
         
         eval(['t' num2str(idep) ' = ti;'])
         eval(['u' num2str(idep) ' = ui;'])
@@ -502,10 +531,10 @@ orig_state=warning; %turn off warnings
     idec = ~all(isnan(real(uif')));
     % plot interpolated data
     
-    figure(3)
+    figure(3);clf
 %     clmap(23)
     clf
-    subplot(311)
+    subplot(411)
     contourf(mtimef,di,real(uif)'*100,[-100:10:100]),caxis([-50,50]),shading flat,
     
     hold on
@@ -516,7 +545,7 @@ orig_state=warning; %turn off warnings
     title(['Low pass (5 days) U at ',mor{im}])
 %     colorbar
     
-    subplot(312)
+    subplot(412)
     contourf(mtimef,di,imag(uif)'*100,[-100:10:100]),caxis([-50,50]),shading flat,
     hold on
 %     contour(mtimef(idec),di,imag(uif(idec,:))'*100,[-50:10:50],'w'),
@@ -527,7 +556,7 @@ orig_state=warning; %turn off warnings
 %     colorbar
     
     idec = ~all(isnan(tif'));
-    subplot(313)
+    subplot(413)
     contourf(mtimef,di,tif',[0:1:30]),caxis([3,30]),shading flat,
     hold on
     contour(mtimef,di,tif',[0:5:30],'w'),
@@ -536,6 +565,15 @@ orig_state=warning; %turn off warnings
     set(h,'linewidth',2),
     title(['Low pass (5 days) T at ',mor{im}])
 %     colorbar
+    idec = ~all(isnan(sif'));
+    subplot(414)
+    contourf(mtimef,di,sif',[32:0.2:38]),caxis([32,38]),shading flat,
+    hold on
+    contour(mtimef,di,sif',[32:0.2:38],'w'),
+    [c,h]=contour(mtimef,di,sif',[32:2:38],'w');
+    axis ij,axis( [range(mtimef(idec)),0.,max(di)+20]),datetick('x','m','keeplimits')
+    set(h,'linewidth',2),
+    title(['Low pass (5 days) S at ',mor{im}])
     
     orient landscape
     print('-djpeg',[outputdirplots '/' mor{im} ,'_interp_lowpass' ext '.jpg'])
