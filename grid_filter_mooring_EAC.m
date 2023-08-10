@@ -40,7 +40,7 @@ nins = 1; %greater than number of salinity instruments to accept interpolation
 
 %add an offset for the interpolation step
 depoff = repmat(5,ndep);
-% 
+
 % %FOR THE SEQ mooring, just the 200m one. 400m mooring is now part of the
 % %EAC500 (see above).
 % %deal with EAC deployments since May 2015 - Sept 2019 (3 deployments)
@@ -130,19 +130,35 @@ orig_state=warning; %turn off warnings
             load([outputdir '/EAC0500_TScoeffs_window.mat']) %use the 500m mooring coeffs for NSI salinity
         end
        
-        %construct a synthetic salinity for every temperature:
+        %construct a synthetic salinity for every temperature deeper than 100m:
         synsal = polyval(b,t,[],mu);
+        [salnew,depsnew] = deal(NaN*t); %empty matrix same size as t
+
         % keep the measured salinity values that aren't NAN
         ikeep = contains(namet,names);
-        salnew = NaN*t; %empty matrix same size as t
+
         % fill the matrix with measured values
         salnew(:,ikeep) = sal;
+        depsnew(:,ikeep) = deps;
+
         %now replace all the NaNs with the synthetic salinity
+        % deeper than 100m
+        ikeepd = min(dept) > 100 & isnan(nansum(salnew)); 
+        salnew(:,ikeepd) = synsal(:,ikeepd);
+        depsnew(:,ikeepd) = dept(:,ikeepd);
+        % identify the empty rows
+        inanr = isnan(nansum(salnew)) & min(dept) < 100;
+        % fill any missing real salinities with synthetic salinities
+        % before removing the synthetic salinity above 100m
         inan = isnan(salnew);
         salnew(inan) = synsal(inan);
+        depsnew(inan) = dept(inan);
+        %now remove the empty rows
+        salnew(:,inanr)=[];
+        depsnew(:,inanr)=[];        
+        %assign
         sal = salnew;
-        %now deps == dept
-        deps = dept;
+        deps = depsnew;
 
         %set up empty matrices
         ui = NaN*ones(length(tbase),length(di))*[1+i];
@@ -252,7 +268,7 @@ orig_state=warning; %turn off warnings
         
         % % check the masking
         % figure(5);clf;hold on
-        % plot(masks,di,'bo')
+        % plot(maskt,di,'bo')
 
         
         %masking here
