@@ -4,6 +4,7 @@ Code to collate IMOS Deep Water Mooring data into a gridded product, one for eac
 The hourly and daily gridded products are created by CSIRO using Matlab code and is available from:
 
 Sloyan, Bernadette; Cowley, Rebecca (2022): East Australian Current individual mooring gridded product - hourly and 10-20m depth gridded. v7. CSIRO. Data Collection. https://doi.org/10.25919/yycf-ed65
+
 Sloyan, Bernadette; Cowley, Rebecca; Chapman, Christopher (2021): East Australian Current individual mooring gridded product - daily and 10-20m depth gridded. v13. CSIRO. Data Collection. https://doi.org/10.25919/egsf-yh54
 
 In addition, the gridded products can be accessed via the IMOS THREDDS Server:
