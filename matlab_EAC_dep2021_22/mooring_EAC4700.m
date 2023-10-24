@@ -1,22 +1,19 @@
 % compiles all data from single mooring onto one time base
 % put u onto depth , put t onto tdepth
-clear
+function mooring_EAC4700
 dist =  600;
 moorn = 'EAC4700';
 dirn = moorn;
+homedir='/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/';
 inputdir=['/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/matdata_qcd_toolbox/'];
 inputdir2=['/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/matdata_qcd_toolbox/'];
 doutputdir=['/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/stacked/'];
 poutputdir = '/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/plots/';
 %% Go through each instrument, starting with the ADCP to get the time base
-
+cd([homedir 'data_processing'])
 %get some information about the mooring:
 ins = read_ins_info('instrument_info.csv',moorn);
 
-%set up some variables:
-t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
-names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
-pdept=[];pdepu=[];pdepd=[];pdeps=[];
 % Use RDI at 120m 
 load([inputdir '24667'])
 s = clean_data(s);

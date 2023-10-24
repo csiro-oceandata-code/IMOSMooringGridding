@@ -1,22 +1,18 @@
 % compiles all data from single mooring onto one time base
 % put u onto depth , put t onto tdepth
-clear
+function mooring_EAC0500
 dist =  600;
 moorn = 'EAC0500';
 dirn = moorn;
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/';
 inputdir=['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/matdata_qcd_toolbox/'];
 inputdir2=['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/matdata_qcd_toolbox/'];
 doutputdir=['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/stacked/'];
 poutputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1505_1611/data_processing/plots/';
 %% Go through each instrument, starting with the ADCP to get the time base
-
+cd([homedir 'data_processing'])
 %get some information about the mooring:
 ins = read_ins_info('instrument_info.csv',moorn);
-
-%set up some variables:
-t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
-names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
-pdept=[];pdepu=[];pdepd=[];pdeps=[];
 
 % Use 16431
 load([inputdir '16431'])
@@ -31,3 +27,4 @@ temp = temp(inwater);
 dep = dep(inwater);
 %% now use the common stacking code:
 stack_mooring
+end

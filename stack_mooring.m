@@ -4,10 +4,59 @@
 % Updated February, 2021 to remove redundant code after QC processes were
 % transferred to the IMOS toolbox in 2020.
 % Bec Cowley, CSIRO Oceans and Atmosphere
+%
+% Oct 2023: Include uncertainty estimates:
+%   SBE37 calibration certificiates, can source this information for each
+%   instrument, but for now, use these values which are from a sub-set of
+%   calibration certificates:
+%       PSAL: 0.0018 (converted from conductivity = 0.002 at STP using 
+%               gsw_SP_from_C, use cond=42.918 - 42.916 mS/cm )
+%       TEMP: 0.0015 deg C
+%       PRES: 0.5 dbar + 0.01 % of reading (translate to DEPTH)
+%   Star Oddis:
+%       TEMP: 0.01 deg C (can be better or worse than this from calibration certs)
+%       PRES: inferred, inherit SBE PRES uncertainties + 0.5 dbar for
+%       measurement uncertainty (translate to DEPTH)
+%   SBE39 calibration certificiates, can source this information for each
+%   instrument, but for now, use these values which are from a sub-set of
+%   calibration certificates:
+%       TEMP: 0.0015 deg C
+%       PRES: 0.5 dbar + 0.01 % of reading (translate to DEPTH)
+%   Aquadopps from setup log file, instrumental uncertainty:
+%       TEMP: 0.1 deg C; NOT USED IN PRODUCTS
+%       PRES: 0.5 % of reading; BUT MOST HAVE LARGE BIASES AND ONLY GOOD
+%           DATA USED IN PRODUCTS, INFERRED DEPTHS WILL INHERIT SBE PRES
+%           UNCERTAINTIES + 0.5 dbar for measurement uncertainty (translate to DEPTH)
+%       Currents: 0.009 m/s
+%   RDI:
+%       Currents: from standard deviation of error velocity, calculated. Could also
+%           add the  instrumental uncertainty, from this formula:
+%           sd(cm/s) = 1.6 x 10^7/(F * I * B * sqrt(P))
+%           F = ADCP acoustic frequency in Hz, get from 'instrument' in global atts
+%               153600 for a 150kHz, 307200 for a 300kHz, 76800 for a 75kHz
+%           I = Transmit ppulse length in meters, get from diff(bdepth)
+%           B = Beam angle coefficient (1 for 30°; 0.684 for 20°)
+%           P = number of pings per ensemble
+%               for 75kHz with on-board averaging and single ping averaged to hourly:
+%                   3:45s intervals (225s), hourly averaging = 16 pings per ensemble
+%               for 300kHz & 150kHz with on-board averaging and single ping averaged to hourly:
+%                   1:12s intervals (72s), hourly averaging = 50 pings per ensemble
+%       TEMP: 0.4 deg C; NOT USED IN PRODUCTS
+%       PRES: 0.1 % of reading (translate to DEPTH)
+%   WQM:
+%       Use same values for TEMP, PSAL, PRES as SBE37
+%
+% Note: PRES/DEPTH uncertainties have not been checked and do not carry through
+% to the data products at this stage (October, 2023)
+
 
 %% go through each instrument on the mooring:
 %set up some variables
 tdepth_m = [];bindex = [];isup=[];
+t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
+names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
+tunc = []; sunc= []; uunc = []; dunc = [];
+pdept=[];pdepu=[];pdepd=[];pdeps=[];
 
 % For each instrument on the mooring (as read in from the csv file of
 % metadata)
@@ -38,6 +87,11 @@ for a = 1:size(ins.serial,1)
     pdep = s.planned_depth;
     
     %     clean up the data - qc has already been done. Apply the flags.
+    % first use the U/V flags for ERV so we only use good data for
+    % uncertainty estimates:
+    if isfield(s,'u')
+        s.erv_qc = s.u_qc;
+    end
     s = clean_data(s);
     
     %skip this instrument if no valid data in any field
@@ -48,6 +102,46 @@ for a = 1:size(ins.serial,1)
                 continue
             end
         end
+        % create uncertainties for S, T, P variables here
+        if contains(s.name, 'Star')
+            s.temperature_unc = repmat(0.01, length(s.time),1);
+        elseif contains(s.name,'Aqua')
+            s.temperature_unc = repmat(0.1, length(s.time),1);
+            s.pressure_unc = 0.5/100*s.pressure + 0.5;
+        elseif contains(s.name, 'RDI')
+            s.temperature_unc = repmat(0.4, length(s.time),1);
+            s.pressure_unc = 0.1/100*s.pressure;   
+            if contains(s.name, '150')
+                F = 153600;
+                P = 50;
+            elseif contains(s.name, '300')
+                F = 307200;
+                P = 50;
+            elseif contains(s.name, '75')
+                F = 76800;
+                P = 16;
+            else
+                disp('Frequency can''t be determined')
+                return
+            end
+            I = abs(diff(s.brange(1:2)));
+            B = 0.684;
+            sd = 1.6 * 10^7/(F * I * B * sqrt(P));
+            % convert to m/s
+            sd = sd/100;
+        elseif contains(s.name, 'SBE') | contains(s.name, 'WQM')
+            if isfield(s,'pressure')
+                s.pressure_unc = 0.01/100*s.pressure + 0.5;
+            end
+            s.temperature_unc = repmat(0.0015, length(s.time),1);
+            if isfield(s,'salinity')
+                s.salinity_unc = repmat(0.0018, length(s.time),1);
+                s.salinity_unc(isnan(s.salinity)) = NaN;
+            end
+        end
+        % clean up uncertainty arrays with qc. Pressure is based on already
+        % cleaned data, salinity done above
+        s.temperature_unc(isnan(s.temperature)) = NaN;
     end
     
     % check for the presence of each field:
@@ -88,6 +182,7 @@ for a = 1:size(ins.serial,1)
         %Also, interpolate the temperature onto the time base (tbase)
         if ~isnan(nansum(s.temperature))
             newt =match_timebase(tbase,s.time,s.temperature);
+            newunc = match_timebase(tbase,s.time,s.temperature_unc);
             if isnan(tlag) %if we haven't already calculated the tlag with pressure in previous loop
                 ins.meas_inf(a) = 0;
                 if abs(s.planned_depth - nanmedian(dep)) > dist
@@ -104,11 +199,13 @@ for a = 1:size(ins.serial,1)
                 end
             end
             t= [t,newt]; %concatenate the interpolated temperature to the temp matrix
-            clear newt
+            tunc = [tunc, newunc];
+            clear newt newunc
         else %no valid temperature data, fill the space with NaNs
             %Might not get here if we skipped due to no valid data in
             %previous check
            t = [t,NaN*t(:,end)];
+           tunc = [tunc, NaN*t(:,end)];
            tlag = NaN;maxcor=NaN;
         end
         
@@ -138,6 +235,12 @@ for a = 1:size(ins.serial,1)
             newp =match_timebase(tbase,s.time,s.depth);
             dept = [dept,newp(:)]; %this is the depth for every temperature record
             named(end+1) = nam; %names of all the instruments with depth
+            if ins.meas_inf(a) == 0 %inferred depths
+               dunc = [dunc, -gsw_z_from_p(0.01/100*newp + 0.5 + 0.5, s.latitude)];
+            else % measured from pressure
+                newpunc = match_timebase(tbase,s.time,s.pressure_unc);
+                dunc = [dunc, -gsw_z_from_p(newpunc, s.latitude)];
+            end
         end
     else
         %oops, no depth, shouldn't get here at all, but a backup
@@ -148,12 +251,15 @@ for a = 1:size(ins.serial,1)
     if isfield(s,'salinity') 
         if ~isnan(nansum(s.salinity))
             news =match_timebase(tbase,s.time,s.salinity);
+            newsunc = match_timebase(tbase,s.time,s.salinity_unc);
             sal= [sal,news];
+            sunc = [sunc, newsunc];
             deps = [deps,newp(:)];
             names(end+1) = nam;
            pdeps = [pdeps,pdep];
         else %keep a space if the instrument has no salinity to help with masking later in gridding step
             sal = [sal,NaN*sal(:,end)];
+            sunc = [sunc,NaN*sal(:,end)];
             deps = [deps,newp(:)];
             names(end+1) = nam;
             pdeps = [pdeps,pdep];
@@ -167,17 +273,27 @@ for a = 1:size(ins.serial,1)
             bsize = size(s.bdepth,2);
             %RDI, has binned data, have to loop through each bin:
             sn.bdepth = NaN*ones(length(tbase),bsize);
-            sn.u = sn.bdepth*(1+NaN*i);sn.w = sn.bdepth;
+            sn.u = sn.bdepth*(1+NaN*i);sn.w = sn.bdepth;sn.erv = sn.bdepth;
             for xx = 1:bsize
                 sn.bdepth(:,xx) =match_timebase(tbase,s.time,s.bdepth(:,xx));
                 sn.u(:,xx) =match_timebase(tbase,s.time,s.u(:,xx));
                 sn.w(:,xx) =match_timebase(tbase,s.time,s.w(:,xx));
+                sn.erv(:,xx) = match_timebase(tbase,s.time,s.erv(:,xx));
             end
-            
+            % where there is a u value, but NaN erv, replace with zero:
+            inan = isnan(sn.erv) & ~isnan(sn.u);
+            sn.erv(inan) = 0;
             %just record bins with some good data:
             idat = ~isnan(nansum(sn.u,1));
             u = [u,sn.u(:,idat)];
+
             depu = [depu,sn.bdepth(:,idat)];
+            % calculate uncertainties on a moving window of +/- 3 hours
+            ut = sn.erv(:,idat);
+            mstd = movstd(ut,7,0,2,"omitnan");
+            % make a matrix of just instrument uncertainty
+            sdm = repmat(sd,size(sn.erv(:,idat)));
+            uunc = [uunc, mstd+sdm]; % uncertainty estimate
             nameu(end+1:end+sum(idat)) = repmat(nam,sum(idat),1);
             %up or down looking?
             pdepu = [pdepu,pdep-s.brange(idat)'];
@@ -193,6 +309,7 @@ for a = 1:size(ins.serial,1)
             newu =match_timebase(tbase,s.time,s.u);
             u = [u,newu];
             depu = [depu,newp(:)];
+            uunc = [uunc, repmat(0.009,length(tbase),1)];% hard code to instrument setup log output for uncertainty (m/s)
             nameu(end+1) = nam;
             pdepu = [pdepu,pdep];
             bindex = [bindex,1];
@@ -200,11 +317,17 @@ for a = 1:size(ins.serial,1)
         end
         
     end
+
     %keep track of measured or inferred depth information to help with
     %diagnosis if the depths look odd
     tdepth_m = [tdepth_m,ins.meas_inf(a)];
     
 end
+% tidy uncertainties where NaNs in the data
+uunc(isnan(u)) = NaN;
+tuunc(isnan(t)) = NaN;
+sunc(isnan(sal)) = NaN;
+dunc(isnan(dept)) = NaN;
 
 %let's exclude the aquadopp and RDI temperatures from the temp matrix
 %these are low precision and can cause temperature inversions in the
@@ -212,26 +335,31 @@ end
 %mooring.
 irem = find(cellfun(@isempty,strfind(upper(namet),'AQUA'))==0);
 t(:,irem) = [];
+tunc(:,irem) = [];
 namet(irem) = [];
 dept(:,irem)=[];
 pdept(irem) = [];
 irem = find(cellfun(@isempty,strfind(upper(namet),'RDI'))==0);
 t(:,irem) = [];
+tunc(:,irem) = [];
 namet(irem) = [];
 dept(:,irem)=[];
 pdept(irem) = [];
 irem = find(cellfun(@isempty,strfind(upper(namet),'LR'))==0);
 t(:,irem) = [];
+tunc(:,irem) = [];
 namet(irem) = [];
 dept(:,irem)=[];
 pdept(irem) = [];
 irem = find(cellfun(@isempty,strfind(upper(namet),'WH'))==0);
 t(:,irem) = [];
+tunc(:,irem) = [];
 namet(irem) = [];
 dept(:,irem)=[];
 pdept(irem) = [];
 irem = find(cellfun(@isempty,strfind(upper(namet),'BB'))==0);
 t(:,irem) = [];
+tunc(:,irem) = [];
 namet(irem) = [];
 dept(:,irem)=[];
 pdept(irem) = [];
@@ -243,7 +371,9 @@ pdept(irem) = [];
 
 dept = dept(:,is);
 dept = double(dept);
+dunc = dunc(:,is);
 t = t(:,is);
+tunc = tunc(:,is);
 namet = namet(is);
 named = named(is);
 t_cor = t_cor(is);
@@ -254,12 +384,14 @@ tdepth_m = tdepth_m(is);
 [val,is]=sort(pdeps);
 deps = deps(:,is);
 sal = sal(:,is);
+sunc = sunc(:,is);
 names = names(is);
 
 % and for u matrices
 [val,is]=sort(pdepu);
 depu = depu(:,is);
 u = u(:,is);
+uunc = uunc(:,is);
 nameu = nameu(is);
 pdepu = pdepu(is);
 isup = isup(is);
@@ -269,7 +401,7 @@ xmoor = s.longitude;
 ymoor = s.latitude;
 botdepth = s.bot_depth;
 %save the full stacked data, before bin removal
-save([doutputdir dirn 'mooring_allbins.mat'],'tbase','u', 'name*','moorn',...
+save([doutputdir dirn 'mooring_allbins.mat'],'tbase','u', '*unc','name*','moorn',...
     'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth')
 
 % outputdir = [poutputdir dirn '/'];
@@ -339,11 +471,13 @@ if length(vel_name) > 1
     nameu(irem) = [];
     pdepu(irem) = [];
     depu(:,irem) = [];
+    uunc(:,irem) = [];
     
 end
 %save version with bins removed
-save([doutputdir dirn 'mooring.mat'],'tbase','u', 'name*','moorn',...
+save([doutputdir dirn 'mooring.mat'],'tbase','u', 'name*','moorn', '*unc',...
     'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth')
+return
 %% time correlation check - if any are low, stop and review why!!
 icor = find(t_cor < .5);
 if ~isempty(icor)
@@ -361,7 +495,7 @@ if ~isempty(icor)
     title('time correlations')
     legend('Time lag, hours','Correlation','Correlated with temperature')
     grid
-    pause
+    % pause
 end
 
 %% some plots to check the data:

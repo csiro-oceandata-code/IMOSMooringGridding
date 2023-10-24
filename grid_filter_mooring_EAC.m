@@ -121,10 +121,17 @@ orig_state=warning; %turn off warnings
                 continue
             else
                 load([inputdir '/' depn{idep} '/stacked/' moorn 'mooring.mat' ]);
-                load([inputdir '/EAC_joined/' moorn '_TScoeffs_window.mat'])
+                if contains('EAC1520',moorn)
+                    % use 2000m mooring for synthetic salinity
+                    load([outputdir '/EAC2000_TScoeffs_window.mat'])
+                else
+                    load([outputdir moorn '_TScoeffs_window.mat'])
+                end
             end
         elseif isseq
             load([inputdir '/' depn{idep} '/stacked/' moorn 'mooring.mat' ]);
+            % use 0500m mooring for synthetic salinity
+            load([outputdir '/EAC0500_TScoeffs_window.mat'])
         else
             load([inputdir '/stacked/' depn{idep} 'mooring.mat' ]);
             load([outputdir '/EAC0500_TScoeffs_window.mat']) %use the 500m mooring coeffs for NSI salinity
@@ -132,7 +139,7 @@ orig_state=warning; %turn off warnings
        
         %construct a synthetic salinity for every temperature deeper than 100m:
         synsal = polyval(b,t,[],mu);
-        [salnew,depsnew] = deal(NaN*t); %empty matrix same size as t
+        [salnew,depsnew,sunew] = deal(NaN*t); %empty matrix same size as t
 
         % keep the measured salinity values that aren't NAN
         ikeep = contains(namet,names);
@@ -140,12 +147,14 @@ orig_state=warning; %turn off warnings
         % fill the matrix with measured values
         salnew(:,ikeep) = sal;
         depsnew(:,ikeep) = deps;
+        sunew(:,ikeep) = sunc;
 
         %now replace all the NaNs with the synthetic salinity
         % deeper than 100m
         ikeepd = min(dept) > 100 & isnan(nansum(salnew)); 
         salnew(:,ikeepd) = synsal(:,ikeepd);
         depsnew(:,ikeepd) = dept(:,ikeepd);
+        sunew(:,ikeepd) = rme;
         % identify the empty rows
         inanr = isnan(nansum(salnew)) & min(dept) < 100;
         % fill any missing real salinities with synthetic salinities
@@ -153,16 +162,21 @@ orig_state=warning; %turn off warnings
         inan = isnan(salnew);
         salnew(inan) = synsal(inan);
         depsnew(inan) = dept(inan);
+        sunew(inan) = rme;
+
         %now remove the empty rows
         salnew(:,inanr)=[];
-        depsnew(:,inanr)=[];        
+        depsnew(:,inanr)=[];  
+        sunew(:, inanr) = [];
         %assign
         sal = salnew;
         deps = depsnew;
+        sunc = sunew;
 
         %set up empty matrices
         ui = NaN*ones(length(tbase),length(di))*[1+i];
-        [ti,si,maskt,masks,masku] = deal(NaN*ones(length(tbase),length(di)));
+        uiunc = NaN*ones(length(tbase),length(di));
+        [ti,si,maskt,masks,masku,tiunc,siunc] = deal(NaN*ones(length(tbase),length(di)));
         
         
         [nt,nu]=size(u);
@@ -184,11 +198,15 @@ orig_state=warning; %turn off warnings
                 %let's straight away just use unique values as filleddeps might have duplication at the edges
                 [jdep,iunique] = unique(jdep);
                 ju = ju(iunique);
-                
+                % uncertainties
+                junc = uunc(j,:);
+                junc = junc(iunique);
+
                 %trim it to data that has depth > 0
                 ig = jdep < 0;
                 jdep(ig) = [];
                 ju(ig) = [];
+                junc(ig) = [];
                 %should be no nans in jdep (as it was filled), so just need
                 %to identify data with values in u and > depth 0
                 ig = find(~isnan(real(ju)) & jdep > 0 );
@@ -206,9 +224,12 @@ orig_state=warning; %turn off warnings
                     % ui(j,idd) = akima([jdep(ig)';jdep(ig(end))'+depoff(im);botd(im,idep)],[ju(ig),ju(ig(end)),[0+i*0]].',di(idd)');
                     dd = [jdep(ig)';jdep(ig(end))'+depoff(im)];
                     jju = [ju(ig),ju(ig(end))].';
+                    jjunc =[junc(ig),junc(ig(end))];
+
                     % simple linear interpolation
                     ui(j,idd) = interp1(dd,jju,di(idd)');
-                    
+                    uiunc(j,idd) = interp1(dd,jjunc,di(idd)');
+
                     %mask out missing data chunks 
                     igz = ~isnan(ju);
                     %then we can do the mask using our filled depth values:
@@ -222,18 +243,22 @@ orig_state=warning; %turn off warnings
             if any(dept(j,:) > 5)
                 jdep = filleddept(j,:);
                 jt = t(j,:);
+                jtu = tunc(j,:);
                 %let's straight away just use unique values as filleddeps might have duplication at the edges
                 [jdep,iunique] = unique(jdep);
                 jt = jt(iunique);
+                jtu = jtu(iunique);
                 
                 %trim it to data that has depth > 0
                 ig = jdep < 0;
                 jdep(ig) = [];
                 jt(ig) = [];
+                jtu(ig) = [];
                 
                 ig = find(~isnan(jt));
                 if length(ig) >= 2
                     ti(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[jt(ig)';jt(ig(end))],di')';
+                    tiunc(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[jtu(ig)';jtu(ig(end))],di')';
                     %then we can do the mask using our filled depth values:
                     igz = ~isnan(jt);
                     maskt(j,:) = interp1(jdep,double(igz),di);
@@ -245,19 +270,23 @@ orig_state=warning; %turn off warnings
             if any(deps(j,:) > 5) 
                 jdep = filleddeps(j,:);
                 js = sal(j,:);
+                jsu = sunc(j,:);
                 %let's straight away just use unique values as filleddeps might have duplication at the edges
                 [jdep,iunique] = unique(jdep);
                 js = js(iunique);
+                jsu = jsu(iunique);
                 
                 %trim it to data that has depth > 0
                 ig = jdep < 0;
                 jdep(ig) = [];
                 js(ig) = [];
+                jsu(ig) = [];
                 
                 ig = find(~isnan(js));
                 
                 if length(ig) > nins %>2 for dwm, >1 for NSI
                     si(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[js(ig)';js(ig(end))],di')';
+                    siunc(j,:) = interp1q([jdep(ig)';jdep(ig(end))'+depoff(im)],[jsu(ig)';jsu(ig(end))],di')';
                     %then we can do the mask using our filled depth values:
                     igz = ~isnan(js);
                     masks(j,:) = interp1(jdep,double(igz),di);
@@ -274,11 +303,13 @@ orig_state=warning; %turn off warnings
         %masking here
         ib = masku > 0.2;
         ui(~ib) = (1+i)*NaN;
+        uiunc(~ib) = NaN;
         ib = maskt > 0.5;
         ti(~ib) = NaN;
+        tiunc(~ib) = NaN;
         ib = masks > 0.5;
         si(~ib) = NaN;
-        
+        siunc(~ib) = NaN;
 % figure(5)
 % pcolor(tbase,di',ti');shading flat; axis ij
 % figure(6)
@@ -293,14 +324,19 @@ orig_state=warning; %turn off warnings
         eval(['t' num2str(idep) ' = ti;'])
         eval(['u' num2str(idep) ' = ui;'])
         eval(['s' num2str(idep) ' = si;'])
+        eval(['tunc' num2str(idep) ' = tiunc;'])
+        eval(['uunc' num2str(idep) ' = uiunc;'])
+        eval(['sunc' num2str(idep) ' = siunc;'])        
         eval(['ndate' num2str(idep) ' = tbase;'])
     end % end deployment loop
      
     % merge deployments on hourly time grid:
     
     ui = NaN*ones(length(time_hrly),length(di))*[1+i];
-    [ti,si ] = deal(NaN*ones(length(time_hrly),length(di)));
+    uiunc = NaN*ones(length(time_hrly),length(di));
+    [ti,si,tiunc,siunc ] = deal(NaN*ones(length(time_hrly),length(di)));
     ttim = [];uu = []; tt = [];ss = [];utim = [];stim = [];
+    uuunc = []; ttunc = [];ssunc = [];
     for idep = 1:ndep
         if isnan(xfinal(im,idep))
             continue
@@ -311,6 +347,9 @@ orig_state=warning; %turn off warnings
         eval(['uu = [uu; u' num2str(idep) '];'])
         eval(['tt = [tt; t' num2str(idep) '];'])
         eval(['ss = [ss; s' num2str(idep) '];'])
+        eval(['uuunc = [uuunc; uunc' num2str(idep) '];'])
+        eval(['ttunc = [ttunc; tunc' num2str(idep) '];'])
+        eval(['ssunc = [ssunc; sunc' num2str(idep) '];'])    
     end
     
     %interpolate across time, at each depth
@@ -319,42 +358,54 @@ orig_state=warning; %turn off warnings
     for id =1:length(di)
         
         z = [uu(:,id)];
+        zu = [uuunc(:,id)];
         ig = ~isnan(z);
          if sum(ig) > 1*30*24 % need 1 months of data
             ui(:,id)=interp1(utim(ig),z(ig),time_hrly(:));
+            uiunc(:,id)=interp1(utim(ig),zu(ig),time_hrly(:));
             mask = interp1(utim ,double(ig),time_hrly(:));
             ib = find(mask < 0.2);
             ui(ib,id) = (1+i)*NaN;
+            uiunc(ib,id) = NaN;
             
          end
         z = [tt(:,id)];
+        zu = [ttunc(:,id)];
         ig = ~isnan(z);
          if sum(ig) > 1*30*24 % need 1 months of data
             ti(:,id)=interp1(ttim(ig),z(ig),time_hrly(:));
+            tiunc(:,id)=interp1(ttim(ig),zu(ig),time_hrly(:));
             mask = interp1(ttim,double(ig),time_hrly(:));
             
             ib = find(mask < 0.2);
             ti(ib,id) = NaN;
+            tiunc(ib,id) = NaN;
          end
         
         z = [ss(:,id)];
+        zu = [ssunc(:,id)];
         ig = ~isnan(z);
          if sum(ig) > 1*30*24 % need 1 months of data
             si(:,id)=interp1(stim(ig),z(ig),time_hrly(:));
+            siunc(:,id)=interp1(stim(ig),zu(ig),time_hrly(:));
             mask = interp1(stim,double(ig),time_hrly(:));
             
             ib = find(mask < 0.2);
             si(ib,id) = NaN;
+            siunc(ib,id) = NaN;
          end
     end
     
     % Set Nan for any time periods outside the original deployment times (between deployments)
-    if ndep > 1;
+    if ndep > 1
         for indep=1:ndep-1
             outofrange = time_hrly > maxtime(im,indep) & time_hrly < mintime(im,indep+1);
             ti(outofrange,:) = NaN;
             si(outofrange,:) = NaN;
             ui(outofrange,:) = NaN+NaN*i;
+            tiunc(outofrange,:) = NaN;
+            siunc(outofrange,:) = NaN;
+            uiunc(outofrange,:) = NaN;
         end
     end
    
@@ -363,7 +414,8 @@ orig_state=warning; %turn off warnings
     ymoor = yfinal(im,1:ndep);
 
     
-    save([outputdir mor{im} '_vert_extrap' ext '.mat'],'di','time_hrly','ui','ti','si','moorn','xmoor','ymoor')
+    save([outputdir mor{im} '_vert_extrap' ext '.mat'],...
+        'di','time_hrly','ui','ti','si','uiunc','tiunc','siunc','moorn','xmoor','ymoor')
     
  
  
@@ -488,19 +540,25 @@ orig_state=warning; %turn off warnings
     uiff = [NaN+ i*NaN]*ones(length(time_hrly),length(di));
     tiff = NaN*ones(length(time_hrly),length(di));
     siff = NaN*ones(length(time_hrly),length(di));
+    uiffunc = NaN*ones(length(time_hrly),length(di));
+    tiffunc = NaN*ones(length(time_hrly),length(di));
+    siffunc = NaN*ones(length(time_hrly),length(di));
     nf = ceil(5/diff(time_hrly(1:2)));
-    for j=1:length(di);
+    for j=1:length(di)
         ig = ~isnan(ui(:,j));
-        if sum(ig) > 2*nf;
+        if sum(ig) > 2*nf
             uiff(ig,j) = filt_ends(hamming(nf),ui(ig,j),1);
+            uiffunc(ig,j) = filt_ends(hamming(nf),uiunc(ig,j),1);
         end
         ig = ~isnan(ti(:,j));
-        if sum(ig) > 2*nf;
+        if sum(ig) > 2*nf
             tiff(ig,j) = filt_ends(hamming(nf),ti(ig,j),1);
+            tiffunc(ig,j) = filt_ends(hamming(nf),tiunc(ig,j),1);
         end
         ig = ~isnan(si(:,j));
-        if sum(ig) > 2*nf;
+        if sum(ig) > 2*nf
             siff(ig,j) = filt_ends(hamming(nf),si(ig,j),1);
+            siffunc(ig,j) = filt_ends(hamming(nf),siunc(ig,j),1);
         end
     end
     
@@ -509,22 +567,26 @@ orig_state=warning; %turn off warnings
     time_daily = time_daily(:);
         
     uif = interp1q(time_hrly,uiff,time_daily);
-    
+    uifunc = interp1q(time_hrly,uiffunc,time_daily);
     tif = interp1q(time_hrly,tiff,time_daily);
-    
+    tifunc = interp1q(time_hrly,tiffunc,time_daily);
     sif = interp1q(time_hrly,siff,time_daily);
+    sifunc = interp1q(time_hrly,siffunc,time_daily);
 
     %fill the NaN+0i in uif with NaN+NaNi
     inan = isnan(uif);
     uif(inan) = NaN+NaN*i;
+    uifunc(inan) = NaN;
     
     %check here for temperature inversions and remove them
     dtif = diff(tif,1,2);
     iinvers = dtif>0;
     iinvers = [false(size(tif,1),1), iinvers];
     tif(iinvers) = NaN;
+    tifunc(iinvers) = NaN;
 
-    save([outputdir,mor{im},'_daily_interp' ext '.mat'],'di','moorn','time_daily','uif','tif','sif','xmoor','ymoor')
+    save([outputdir,mor{im},'_daily_interp' ext '.mat'],...
+        'di','moorn','time_daily','uif','tif','sif','uifunc','tifunc','sifunc','xmoor','ymoor')
     
     % make a daily average version:
     uif = NaN*ones(length(time_daily),length(di))*[1+i];tif = uif;sif = uif;

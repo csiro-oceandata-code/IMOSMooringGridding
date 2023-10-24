@@ -1,6 +1,6 @@
 % compiles all data from single mooring onto one time base
 % put u onto depth , put t onto tdepth
-clear
+function mooring_EAC4800
 dist =  600; 
 moorn = 'EAC4800';
 dirn = moorn;
@@ -10,14 +10,10 @@ inputdir2=[homedir 'data_processing/matdata_qcd_toolbox/'];
 doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'data_processing/plots/'];
 %% Go through each instrument, starting with the ADCP to get the time base
-
+cd([homedir 'data_processing'])
 %get some information about the mooring:
 ins = read_ins_info('instrument_info.csv',moorn);
 
-%set up some variables:
-t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
-names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
-pdept=[];pdepu=[];pdepd=[];pdeps=[];
 %load([inputdir '13088'])
 load([inputdir '16072'])
 s = clean_data(s);
