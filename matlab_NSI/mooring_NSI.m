@@ -7,7 +7,7 @@ doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'plots/'];
 m = dir([homedir 'data_processing/']);
 moor = {};
-for ifn = 4:6%:length(m)
+for ifn = 1:length(m)
     if m(ifn).isdir
         moor = [moor,m(ifn).name];
     end
@@ -50,7 +50,7 @@ end
 %     end
 % end
 %%
-for fold =1:length(moor)
+for fold =4:length(moor)
     clear ins
     dirn = moor{fold};
     moorn = moor{fold};
@@ -61,10 +61,10 @@ for fold =1:length(moor)
     
     %get the serial number informations for the stacking:
     fn = dir([inputdir '*.mat']);
+    ins.serial = cell(length(fn),1);
     for ifn = 1:length(fn)
         load([inputdir fn(ifn).name])
-        ins.serial(ifn,:) = '           ';
-        ins.serial(ifn,1:length(fn(ifn).name(1:end-4))) = fn(ifn).name(1:end-4);%s.serial;
+        ins.serial{ifn} = s.serial;
 %         ins.serial(ifn,1:length(s.serial)) = s.serial;            
         if isfield(s,'u')
             s = clean_data(s);
@@ -93,22 +93,7 @@ for fold =1:length(moor)
             temp = temp(inwater);
             dep = dep(inwater);
        end
-    %set up some variables:
-    t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
-    names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
-    pdept=[];pdepu=[];pdepd=[];pdeps=[];
     
-    %nominate instruments for inferring pressure:
-    %No partial pressures required:
-    parprs = {''};
-    
-    %No AQDs and others with pressure offsets
-    offprs = {};
-    
-    %format is instrument with no press, pressure above, pressure below
-    % or instrument with no press, pressure closest, pressure second closest
-    prs = {''
-        };
     %% now use the common stacking code:
     try
         stack_mooring
@@ -119,9 +104,9 @@ for fold =1:length(moor)
             sal(4862:8253,2) = NaN;
             deps(4862:8253,2) = NaN;
             save([doutputdir dirn 'mooring_allbins.mat'],'tbase','u', 'name*','moorn',...
-    'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth')
+    'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth', '*unc')
             save([doutputdir dirn 'mooring.mat'],'tbase','u', 'name*','moorn',...
-    'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth')
+    'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth', '*unc')
 
         end
     catch Me
@@ -138,11 +123,13 @@ doutputdir=[homedir 'stacked/'];
 poutputdir = [homedir 'plots/'];
 load([doutputdir '201209mooring_allbins.mat'])
 sal(1:4694,2)=NaN;
+sunc(1:4694,2)=NaN;
 save([doutputdir '201209mooring_allbins.mat'])
 save([doutputdir '201209mooring.mat'])
 %and 201803
 load([doutputdir '201803mooring_allbins.mat'])
 sal(:,2)=NaN;
+sunc(:,2)=NaN;
 save([doutputdir '201803mooring_allbins.mat'])
 save([doutputdir '201803mooring.mat'])
 
