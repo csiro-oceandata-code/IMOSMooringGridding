@@ -10,36 +10,36 @@
 
 clear all
 
-%   % ALL EAC deployments. SEQ400m mooring is now included in EAC0500 mooring
-%  isnsi = 0;isseq = 0;
-% depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105','EAC2105_2207'};
-% ndep = length(depn);
-% 
-% inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/';
-% outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
-% outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
-% 
-% %Note that the SEQ400m mooring is now included in the EAC dataset and
-% %is labelled as EAC0500.
-% mor = {'EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
-% 
-% %add an offset for the interpolation step
-% depoff = [20,20,20,20,20,20,20];
-% nins = 2; %greater than number of salinity instruments to accept interpolation
+  % ALL EAC deployments. SEQ400m mooring is now included in EAC0500 mooring
+ isnsi = 0;isseq = 0;
+depn = {'SEQ','EAC1204_1308','EAC1505_1611','EAC1611_1805','EAC1805_1909','EAC1909_2105','EAC2105_2207'};
+ndep = length(depn);
 
-% FOR THE NSI mooring
-isnsi = 1;isseq = 0;
-depn = {'201204' '201209' '201302' '201311' '201405' '201410'	'201503' '201509'	'201602'	'201606' '201610' 	'201702'	'201706'...
-    '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106', '202109','202203'};
-ndep = length(depn); 
-inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
+inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/';
 outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
 outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
-mor = {'NRSNSI'};
-nins = 1; %greater than number of salinity instruments to accept interpolation
+
+%Note that the SEQ400m mooring is now included in the EAC dataset and
+%is labelled as EAC0500.
+mor = {'EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EAC4800'};
 
 %add an offset for the interpolation step
-depoff = repmat(5,ndep);
+depoff = [20,20,20,20,20,20,20];
+nins = 2; %greater than number of salinity instruments to accept interpolation
+% 
+% % FOR THE NSI mooring
+% isnsi = 1;isseq = 0;
+% depn = {'201204' '201209' '201302' '201311' '201405' '201410'	'201503' '201509'	'201602'	'201606' '201610' 	'201702'	'201706'...
+%     '201710' '201803' '201806'	'201810'   '201902'	'201907', '201912','202010','202103','202106', '202109','202203'};
+% ndep = length(depn); 
+% inputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/';
+% outputdir='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/';
+% outputdirplots='/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_joined/plots/';
+% mor = {'NRSNSI'};
+% nins = 1; %greater than number of salinity instruments to accept interpolation
+% 
+% %add an offset for the interpolation step
+% depoff = repmat(5,ndep);
 
 % %FOR THE SEQ mooring, just the 200m one. 400m mooring is now part of the
 % %EAC500 (see above).
@@ -175,7 +175,7 @@ orig_state=warning; %turn off warnings
 
         %set up empty matrices
         ui = NaN*ones(length(tbase),length(di))*[1+i];
-        uiunc = NaN*ones(length(tbase),length(di));
+        uiunc = NaN*ones(length(tbase),length(di));viunc = uiunc;
         [ti,si,maskt,masks,masku,tiunc,siunc] = deal(NaN*ones(length(tbase),length(di)));
         
         
@@ -199,14 +199,14 @@ orig_state=warning; %turn off warnings
                 [jdep,iunique] = unique(jdep);
                 ju = ju(iunique);
                 % uncertainties
-                junc = uunc(j,:);
-                junc = junc(iunique);
+                junc = uunc(j,:);jvunc = vunc(j,:);
+                junc = junc(iunique); jvunc = jvunc(iunique);
 
                 %trim it to data that has depth > 0
                 ig = jdep < 0;
                 jdep(ig) = [];
                 ju(ig) = [];
-                junc(ig) = [];
+                junc(ig) = [];jvunc(ig) = [];
                 %should be no nans in jdep (as it was filled), so just need
                 %to identify data with values in u and > depth 0
                 ig = find(~isnan(real(ju)) & jdep > 0 );
@@ -225,10 +225,12 @@ orig_state=warning; %turn off warnings
                     dd = [jdep(ig)';jdep(ig(end))'+depoff(im)];
                     jju = [ju(ig),ju(ig(end))].';
                     jjunc =[junc(ig),junc(ig(end))];
+                    jjvunc = [jvunc(ig),jvunc(ig(end))];
 
                     % simple linear interpolation
                     ui(j,idd) = interp1(dd,jju,di(idd)');
                     uiunc(j,idd) = interp1(dd,jjunc,di(idd)');
+                    viunc(j,idd) = interp1(dd,jjvunc,di(idd)');
 
                     %mask out missing data chunks 
                     igz = ~isnan(ju);
@@ -304,6 +306,7 @@ orig_state=warning; %turn off warnings
         ib = masku > 0.2;
         ui(~ib) = (1+i)*NaN;
         uiunc(~ib) = NaN;
+        viunc(~ib) = NaN;
         ib = maskt > 0.5;
         ti(~ib) = NaN;
         tiunc(~ib) = NaN;
@@ -326,6 +329,7 @@ orig_state=warning; %turn off warnings
         eval(['s' num2str(idep) ' = si;'])
         eval(['tunc' num2str(idep) ' = tiunc;'])
         eval(['uunc' num2str(idep) ' = uiunc;'])
+        eval(['vunc' num2str(idep) ' = viunc;'])
         eval(['sunc' num2str(idep) ' = siunc;'])        
         eval(['ndate' num2str(idep) ' = tbase;'])
     end % end deployment loop
@@ -333,10 +337,10 @@ orig_state=warning; %turn off warnings
     % merge deployments on hourly time grid:
     
     ui = NaN*ones(length(time_hrly),length(di))*[1+i];
-    uiunc = NaN*ones(length(time_hrly),length(di));
+    uiunc = NaN*ones(length(time_hrly),length(di));viunc = uiunc;
     [ti,si,tiunc,siunc ] = deal(NaN*ones(length(time_hrly),length(di)));
     ttim = [];uu = []; tt = [];ss = [];utim = [];stim = [];
-    uuunc = []; ttunc = [];ssunc = [];
+    vvunc = []; uuunc = []; ttunc = [];ssunc = [];
     for idep = 1:ndep
         if isnan(xfinal(im,idep))
             continue
@@ -348,6 +352,7 @@ orig_state=warning; %turn off warnings
         eval(['tt = [tt; t' num2str(idep) '];'])
         eval(['ss = [ss; s' num2str(idep) '];'])
         eval(['uuunc = [uuunc; uunc' num2str(idep) '];'])
+        eval(['vvunc = [vvunc; vunc' num2str(idep) '];'])
         eval(['ttunc = [ttunc; tunc' num2str(idep) '];'])
         eval(['ssunc = [ssunc; sunc' num2str(idep) '];'])    
     end
@@ -358,15 +363,16 @@ orig_state=warning; %turn off warnings
     for id =1:length(di)
         
         z = [uu(:,id)];
-        zu = [uuunc(:,id)];
+        zu = [uuunc(:,id)];zv = [vvunc(:,id)];
         ig = ~isnan(z);
          if sum(ig) > 1*30*24 % need 1 months of data
             ui(:,id)=interp1(utim(ig),z(ig),time_hrly(:));
             uiunc(:,id)=interp1(utim(ig),zu(ig),time_hrly(:));
+            viunc(:,id)=interp1(utim(ig),zv(ig),time_hrly(:));
             mask = interp1(utim ,double(ig),time_hrly(:));
             ib = find(mask < 0.2);
             ui(ib,id) = (1+i)*NaN;
-            uiunc(ib,id) = NaN;
+            uiunc(ib,id) = NaN; viunc(ib,id) = NaN;
             
          end
         z = [tt(:,id)];
@@ -405,7 +411,7 @@ orig_state=warning; %turn off warnings
             ui(outofrange,:) = NaN+NaN*i;
             tiunc(outofrange,:) = NaN;
             siunc(outofrange,:) = NaN;
-            uiunc(outofrange,:) = NaN;
+            uiunc(outofrange,:) = NaN;viunc(outofrange,:) = NaN;
         end
     end
    
@@ -415,7 +421,7 @@ orig_state=warning; %turn off warnings
 
     
     save([outputdir mor{im} '_vert_extrap' ext '.mat'],...
-        'di','time_hrly','ui','ti','si','uiunc','tiunc','siunc','moorn','xmoor','ymoor')
+        'di','time_hrly','ui','ti','si','uiunc','viunc','tiunc','siunc','moorn','xmoor','ymoor')
     
  
  
@@ -540,7 +546,7 @@ orig_state=warning; %turn off warnings
     uiff = [NaN+ i*NaN]*ones(length(time_hrly),length(di));
     tiff = NaN*ones(length(time_hrly),length(di));
     siff = NaN*ones(length(time_hrly),length(di));
-    uiffunc = NaN*ones(length(time_hrly),length(di));
+    uiffunc = NaN*ones(length(time_hrly),length(di));viffunc = uiffunc;
     tiffunc = NaN*ones(length(time_hrly),length(di));
     siffunc = NaN*ones(length(time_hrly),length(di));
     nf = ceil(5/diff(time_hrly(1:2)));
@@ -549,6 +555,7 @@ orig_state=warning; %turn off warnings
         if sum(ig) > 2*nf
             uiff(ig,j) = filt_ends(hamming(nf),ui(ig,j),1);
             uiffunc(ig,j) = filt_ends(hamming(nf),uiunc(ig,j),1);
+            viffunc(ig,j) = filt_ends(hamming(nf),viunc(ig,j),1);
         end
         ig = ~isnan(ti(:,j));
         if sum(ig) > 2*nf
@@ -568,6 +575,7 @@ orig_state=warning; %turn off warnings
         
     uif = interp1q(time_hrly,uiff,time_daily);
     uifunc = interp1q(time_hrly,uiffunc,time_daily);
+    vifunc = interp1q(time_hrly,viffunc,time_daily);
     tif = interp1q(time_hrly,tiff,time_daily);
     tifunc = interp1q(time_hrly,tiffunc,time_daily);
     sif = interp1q(time_hrly,siff,time_daily);
@@ -576,7 +584,7 @@ orig_state=warning; %turn off warnings
     %fill the NaN+0i in uif with NaN+NaNi
     inan = isnan(uif);
     uif(inan) = NaN+NaN*i;
-    uifunc(inan) = NaN;
+    uifunc(inan) = NaN;vifunc(inan) = NaN;
     
     %check here for temperature inversions and remove them
     dtif = diff(tif,1,2);
@@ -586,7 +594,7 @@ orig_state=warning; %turn off warnings
     tifunc(iinvers) = NaN;
 
     save([outputdir,mor{im},'_daily_interp' ext '.mat'],...
-        'di','moorn','time_daily','uif','tif','sif','uifunc','tifunc','sifunc','xmoor','ymoor')
+        'di','moorn','time_daily','uif','tif','sif','uifunc','vifunc','tifunc','sifunc','xmoor','ymoor')
     
     % make a daily average version:
     uif = NaN*ones(length(time_daily),length(di))*[1+i];tif = uif;sif = uif;

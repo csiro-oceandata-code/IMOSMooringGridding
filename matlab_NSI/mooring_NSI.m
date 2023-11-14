@@ -8,7 +8,7 @@ poutputdir = [homedir 'plots/'];
 m = dir([homedir 'data_processing/']);
 moor = {};
 for ifn = 1:length(m)
-    if m(ifn).isdir
+    if contains(m(ifn).name,'20')
         moor = [moor,m(ifn).name];
     end
 end
@@ -50,7 +50,7 @@ end
 %     end
 % end
 %%
-for fold =4:length(moor)
+for fold =1:length(moor)
     clear ins
     dirn = moor{fold};
     moorn = moor{fold};

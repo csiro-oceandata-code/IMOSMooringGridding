@@ -4,7 +4,7 @@ inpd = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC_
 cd(inpd)
 fils = dir([inpd 'EAC*daily-depth*-2022*.nc']);
 var = {'TEMP','PSAL','UCUR','VCUR'};
-for b = 1:length(var);
+for b = 3%:length(var)
     for a = 1:length(fils)
         dat = nc2struct(fils(a).name);
         figure(1);clf
@@ -21,6 +21,9 @@ for b = 1:length(var);
         subplot(2,1,2)
         pcolor(dat.TIME,dat.DEPTH,dat.([var{b} '_FILLED_uncertainty']));shading flat; axis ij;colorbar
         title(fils(a).name)
+        figure(3);clf
+        pcolor(dat.TIME,dat.DEPTH,dat.(var{b}) ./ dat.([var{b} '_uncertainty']));shading flat; axis ij;colorbar
+        caxis([-0.01 0.01])
         pause
     end
 end

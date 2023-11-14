@@ -13,7 +13,7 @@ mdir = {'SEQ400','EAC1520','EAC0500','EAC2000','EAC3200','EAC4200','EAC4700','EA
 
 for istack = 1:length(depdir)
 
-    for im = 5:length(mdir)
+    for im = 1:length(mdir)
         disp([cdir{istack} '/mooring_' mdir{im}])
         stackc=[codedir cdir{istack} '/mooring_' mdir{im} '.m'];
         if ~isfile(stackc)
