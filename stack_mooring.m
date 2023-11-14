@@ -6,18 +6,23 @@
 % Bec Cowley, CSIRO Oceans and Atmosphere
 %
 % Oct 2023: Include uncertainty estimates:
-%   SBE37 calibration certificiates, can source this information for each
+%   SBE37 expanded uncertainties from CSIRO calibration certificiates,
+%   can source this information for each individual
 %   instrument, but for now, use these values which are from a sub-set of
 %   calibration certificates:
 %       PSAL: 0.0018 (converted from conductivity = 0.002 at STP using 
 %               gsw_SP_from_C, use cond=42.918 - 42.916 mS/cm )
 %       TEMP: 0.0015 deg C
 %       PRES: 0.5 dbar + 0.01 % of reading (translate to DEPTH)
-%   Star Oddis:
+%   Star Oddis expanded uncertainties from CSIRO calibration certificiates,
+%   can source this information for each individual
+%   instrument, but for now, use these values which are from a sub-set of
+%   calibration certificates:
 %       TEMP: 0.01 deg C (can be better or worse than this from calibration certs)
 %       PRES: inferred, inherit SBE PRES uncertainties + 0.5 dbar for
 %       measurement uncertainty (translate to DEPTH)
-%   SBE39 calibration certificiates, can source this information for each
+%   SBE39 expanded uncertainties from CSIRO calibration certificiates,
+%   can source this information for each individual
 %   instrument, but for now, use these values which are from a sub-set of
 %   calibration certificates:
 %       TEMP: 0.0015 deg C
@@ -29,18 +34,7 @@
 %           UNCERTAINTIES + 0.5 dbar for measurement uncertainty (translate to DEPTH)
 %       Currents: 0.009 m/s
 %   RDI:
-%       Currents: from standard deviation of error velocity, calculated. Could also
-%           add the  instrumental uncertainty, from this formula:
-%           sd(cm/s) = 1.6 x 10^7/(F * I * B * sqrt(P))
-%           F = ADCP acoustic frequency in Hz, get from 'instrument' in global atts
-%               153600 for a 150kHz, 307200 for a 300kHz, 76800 for a 75kHz
-%           I = Transmit ppulse length in meters, get from diff(bdepth)
-%           B = Beam angle coefficient (1 for 30°; 0.684 for 20°)
-%           P = number of pings per ensemble
-%               for 75kHz with on-board averaging and single ping averaged to hourly:
-%                   3:45s intervals (225s), hourly averaging = 16 pings per ensemble
-%               for 300kHz & 150kHz with on-board averaging and single ping averaged to hourly:
-%                   1:12s intervals (72s), hourly averaging = 50 pings per ensemble
+%       Currents: from standard deviation of error velocity, calculated. 
 %       TEMP: 0.4 deg C; NOT USED IN PRODUCTS
 %       PRES: 0.1 % of reading (translate to DEPTH)
 %   WQM:
@@ -55,7 +49,7 @@
 tdepth_m = [];bindex = [];isup=[];
 t_lag = [];t_cor = [];t=[];dept = [];namet={};named={};
 names = {}; nameu = {};sal=[];deps=[];u=[];depu=[];
-tunc = []; sunc= []; uunc = []; dunc = [];
+tunc = []; sunc= []; uunc = []; vunc = []; dunc = [];
 pdept=[];pdepu=[];pdepd=[];pdeps=[];
 
 % For each instrument on the mooring (as read in from the csv file of
@@ -111,24 +105,6 @@ for a = 1:size(ins.serial,1)
         elseif contains(s.name, 'RDI')
             s.temperature_unc = repmat(0.4, length(s.time),1);
             s.pressure_unc = 0.1/100*s.pressure;   
-            if contains(s.name, '150')
-                F = 153600;
-                P = 50;
-            elseif contains(s.name, '300')
-                F = 307200;
-                P = 50;
-            elseif contains(s.name, '75')
-                F = 76800;
-                P = 16;
-            else
-                disp('Frequency can''t be determined')
-                return
-            end
-            I = abs(diff(s.brange(1:2)));
-            B = 0.684;
-            sd = 1.6 * 10^7/(F * I * B * sqrt(P));
-            % convert to m/s
-            sd = sd/100;
         elseif contains(s.name, 'SBE') | contains(s.name, 'WQM')
             if isfield(s,'pressure')
                 s.pressure_unc = 0.01/100*s.pressure + 0.5;
@@ -288,12 +264,16 @@ for a = 1:size(ins.serial,1)
             u = [u,sn.u(:,idat)];
 
             depu = [depu,sn.bdepth(:,idat)];
-            % calculate uncertainties on a moving window of +/- 3 hours
+            % calculate u and v uncertainty
             ut = sn.erv(:,idat);
-            mstd = movstd(ut,7,0,2,"omitnan");
-            % make a matrix of just instrument uncertainty
-            sdm = repmat(sd,size(sn.erv(:,idat)));
-            uunc = [uunc, mstd+sdm]; % uncertainty estimate
+            D = angle(sn.u(:,idat));
+            uut = abs(ut.*cos(D));
+            vut = abs(ut.*sin(D));
+            % calculate uncertainties on a moving window of +/- 3 hours
+            mstdu = movstd(uut,7,0,2,"omitnan");
+            mstdv = movstd(vut,7,0,2,'omitnan');
+            uunc = [uunc, mstdu]; % uncertainty estimate for u
+            vunc = [vunc, mstdv]; % uncertainty estimate for v
             nameu(end+1:end+sum(idat)) = repmat(nam,sum(idat),1);
             %up or down looking?
             pdepu = [pdepu,pdep-s.brange(idat)'];
@@ -309,7 +289,13 @@ for a = 1:size(ins.serial,1)
             newu =match_timebase(tbase,s.time,s.u);
             u = [u,newu];
             depu = [depu,newp(:)];
-            uunc = [uunc, repmat(0.009,length(tbase),1)];% hard code to instrument setup log output for uncertainty (m/s)
+            % calculate u and v uncertainty
+            ut = repmat(0.009,length(tbase),1);% hard code to instrument setup log output for uncertainty (m/s)
+            D = angle(newu);
+            uut = abs(ut.*cos(D));
+            vut = abs(ut.*sin(D));
+            uunc = [uunc, uut];
+            vunc = [vunc, vut];
             nameu(end+1) = nam;
             pdepu = [pdepu,pdep];
             bindex = [bindex,1];
@@ -325,6 +311,7 @@ for a = 1:size(ins.serial,1)
 end
 % tidy uncertainties where NaNs in the data
 uunc(isnan(u)) = NaN;
+vunc(isnan(u)) = NaN;
 tuunc(isnan(t)) = NaN;
 sunc(isnan(sal)) = NaN;
 dunc(isnan(dept)) = NaN;
@@ -392,6 +379,7 @@ names = names(is);
 depu = depu(:,is);
 u = u(:,is);
 uunc = uunc(:,is);
+vunc = vunc(:,is);
 nameu = nameu(is);
 pdepu = pdepu(is);
 isup = isup(is);
@@ -472,8 +460,10 @@ if length(vel_name) > 1
     pdepu(irem) = [];
     depu(:,irem) = [];
     uunc(:,irem) = [];
+    vunc(:,irem) = [];
     
 end
+
 %save version with bins removed
 save([doutputdir dirn 'mooring.mat'],'tbase','u', 'name*','moorn', '*unc',...
     'dep*','t','sal','tdepth_m','t_cor','t_lag','xmoor','ymoor','botdepth')
