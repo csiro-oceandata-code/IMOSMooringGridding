@@ -149,6 +149,10 @@ for a = 1:size(ins.serial,1)
                 end
             catch
                 disp(['bad pressures for ' s.serial ', ' s.name])
+                % for just one instrument on EAC4200, 2021-2022
+                if matches(s.serial, '9337') & contains(homedir,'EACdata/mooring/EAC2105_2207/')
+                    tlag = 0;
+                end
             end
         else
             ins.meas_inf(a) = 0; % no pressure, inferred
