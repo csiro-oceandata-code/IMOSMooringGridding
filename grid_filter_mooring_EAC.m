@@ -93,7 +93,7 @@ warning('on','all')
 orig_state=warning; %turn off warnings
 
 % cycle through each mooring
- for im=1:length(mor)
+ for im=5%1:length(mor)
     moorn = mor{im};
     disp(moorn)
 

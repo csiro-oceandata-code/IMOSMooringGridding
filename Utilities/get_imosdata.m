@@ -1,10 +1,10 @@
 % import the IMOS netcdf files and take a look:
 clear
 
-moorn = 'EAC4800';
-homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/';
-inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/IMOSnetcdf/' moorn '/'];
-outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC1611_1805/data_processing/matdata_qcd_toolbox/';
+moorn = 'EAC4200';
+homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/';
+inputdir = ['/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/IMOSnetcdf/' moorn '/'];
+outputdir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/EAC2105_2207/data_processing/matdata_qcd_toolbox/';
 
 % homedir = '/oa-decadal-climate/work/observations/oceanobs_data/EACdata/mooring/othermooring/NSI/data_processing/';
 % m = dir(homedir);
